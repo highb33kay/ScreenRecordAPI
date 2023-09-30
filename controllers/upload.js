@@ -1,8 +1,20 @@
 const fs = require("fs");
 const path = require("path");
 
+// Function to delete a file
+const deleteFile = (filePath) => {
+  fs.unlink(filePath, (err) => {
+    if (err) {
+      console.error(`Error deleting file: ${err}`);
+    } else {
+      console.log(`Deleted file: ${filePath}`);
+    }
+  });
+};
+
 const uploadVideo = async (req, res) => {
   try {
+    console.log("starting");
     console.log(req.file);
     if (!req.file) {
       console.log("No file uploaded");
@@ -37,6 +49,11 @@ const uploadVideo = async (req, res) => {
       });
       await file.save();
       res.status(201).json({ file });
+
+      // Schedule file deletion after 5 minutes
+      setTimeout(() => {
+        deleteFile(filePath);
+      }, 5 * 60 * 1000); // 5 minutes in milliseconds
     });
 
     // Handle any errors that occur during the write stream
