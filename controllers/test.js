@@ -1,5 +1,13 @@
-const fs = require("fs");
-const path = require("path");
+const cloudinary = require("cloudinary").v2;
+require("dotenv").config();
+const Video = require("../models/Upload");
+const streamifier = require("streamifier");
+
+cloudinary.config({
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_SECRET,
+});
 
 const uploadVideo = async (req, res) => {
   try {
@@ -9,33 +17,29 @@ const uploadVideo = async (req, res) => {
       return res.status(400).json({ msg: "No file uploaded" });
     }
 
-    // Create a unique filename (you can use any logic you prefer)
-    const uniqueFilename = Date.now() + "-" + req.file.originalname;
+    const stream = cloudinary.uploader.upload_stream(
+      { resource_type: "video" },
+      async (error, result) => {
+        if (error) {
+          console.error(error);
+          return res.status(500).json({ error });
+        } else {
+          const file = new Video({
+            filename: req.file.originalname,
+            videoUrl: result.secure_url,
+          });
+          await file.save();
+          res.status(201).json({ file });
+        }
+        console.log("result", result);
+      }
+    );
 
-    // Define the file path where the video will be saved locally (outside controller)
-    const filePath = path.join(__dirname, "../uploads", uniqueFilename);
+    console.log(stream.secure_url);
 
-    // Create a write stream to save the video locally
-    const writeStream = fs.createWriteStream(filePath);
+    // res.status(201).json({ file });
 
-    // Pipe the data from the uploaded file buffer to the write stream
-    req.file.stream.pipe(writeStream);
-
-    // Wait for the write stream to finish
-    writeStream.on("finish", async () => {
-      const file = new Video({
-        filename: req.file.originalname,
-        videoPath: filePath, // Store the local file path
-      });
-      await file.save();
-      res.status(201).json({ file });
-    });
-
-    // Handle any errors that occur during the write stream
-    writeStream.on("error", (error) => {
-      console.error(error);
-      res.status(500).json({ error });
-    });
+    streamifier.createReadStream(req.file.buffer).pipe(stream);
   } catch (error) {
     console.error(error);
     res.status(500).json({ error });
