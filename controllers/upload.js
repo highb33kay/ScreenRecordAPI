@@ -12,8 +12,16 @@ const uploadVideo = async (req, res) => {
     // Create a unique filename (you can use any logic you prefer)
     const uniqueFilename = Date.now() + "-" + req.file.originalname;
 
-    // Define the file path where the video will be saved locally (outside controller)
-    const filePath = path.join(__dirname, "../uploads", uniqueFilename);
+    // Define the directory path where the video will be saved locally (outside controller)
+    const directoryPath = path.join(__dirname, "../uploads");
+
+    // Check if the "uploads" directory exists; if not, create it
+    if (!fs.existsSync(directoryPath)) {
+      fs.mkdirSync(directoryPath, { recursive: true });
+    }
+
+    // Define the file path where the video will be saved within the "uploads" directory
+    const filePath = path.join(directoryPath, uniqueFilename);
 
     // Create a write stream to save the video locally
     const writeStream = fs.createWriteStream(filePath);
