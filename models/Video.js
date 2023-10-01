@@ -1,24 +1,21 @@
-const { DataTypes } = require("sequelize");
-const sequelize = require("../config/config");
+const mongoose = require("mongoose");
 
-const Video = sequelize.define("Video", {
-  id: {
-    type: DataTypes.STRING,
-    primaryKey: true,
-    allowNull: false,
-  },
-  videoUrl: {
-    type: DataTypes.STRING,
-    allowNull: false,
-  },
-  filename: {
-    type: DataTypes.STRING,
-    allowNull: false,
+const recordingSessionSchema = new mongoose.Schema({
+  sessionID: {
+    type: String,
+    required: true,
+    unique: true,
   },
   createdAt: {
-    type: DataTypes.DATE,
-    allowNull: false,
+    type: Date,
+    required: true,
   },
+  // Add other fields specific to your RecordingSession schema as needed
 });
 
-module.exports = Video;
+const RecordingSession = mongoose.model(
+  "RecordingSession",
+  recordingSessionSchema
+);
+
+module.exports = RecordingSession;
