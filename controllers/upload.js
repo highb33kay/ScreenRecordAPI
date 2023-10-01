@@ -15,14 +15,19 @@ const deleteFile = (filePath) => {
 const uploadVideo = async (req, res) => {
   try {
     console.log("starting");
-    console.log(req.file);
-    if (!req.file) {
-      console.log("No file uploaded");
-      return res.status(400).json({ msg: "No file uploaded" });
+
+    // Check if the request body contains the base64 encoded video data
+    if (!req.body || !req.body.base64Data) {
+      console.log("No base64 data received");
+      return res.status(400).json({ msg: "No base64 data received" });
     }
 
+    // Decode the base64 string to binary data
+    const base64Data = req.body.base64Data;
+    const videoData = Buffer.from(base64Data, "base64");
+
     // Create a unique filename (you can use any logic you prefer)
-    const uniqueFilename = Date.now() + "-" + req.file.originalname;
+    const uniqueFilename = Date.now() + "-video.mp4"; // Adjust the file extension as needed
 
     // Define the directory path where the video will be saved locally (outside controller)
     const directoryPath = path.join(__dirname, "../uploads");
@@ -35,32 +40,24 @@ const uploadVideo = async (req, res) => {
     // Define the file path where the video will be saved within the "uploads" directory
     const filePath = path.join(directoryPath, uniqueFilename);
 
-    // Create a write stream to save the video locally
-    const writeStream = fs.createWriteStream(filePath);
+    // Write the binary data to the file
+    fs.writeFileSync(filePath, videoData);
 
-    // Pipe the data from the uploaded file buffer to the write stream
-    req.file.stream.pipe(writeStream);
+    // Create a new Video model or perform any other necessary database operations here
+    // For example:
+    // const file = new Video({
+    //   filename: uniqueFilename,
+    //   videoPath: filePath, // Store the local file path
+    // });
+    // await file.save();
 
-    // Wait for the write stream to finish
-    writeStream.on("finish", async () => {
-      const file = new Video({
-        filename: req.file.originalname,
-        videoPath: filePath, // Store the local file path
-      });
-      await file.save();
-      res.status(201).json({ file });
+    // Respond with a success message
+    res.status(201).json({ msg: "File uploaded successfully" });
 
-      // Schedule file deletion after 5 minutes
-      setTimeout(() => {
-        deleteFile(filePath);
-      }, 5 * 60 * 1000); // 5 minutes in milliseconds
-    });
-
-    // Handle any errors that occur during the write stream
-    writeStream.on("error", (error) => {
-      console.error(error);
-      res.status(500).json({ error });
-    });
+    // Schedule file deletion after 5 minutes
+    setTimeout(() => {
+      deleteFile(filePath);
+    }, 5 * 60 * 1000); // 5 minutes in milliseconds
   } catch (error) {
     console.error(error);
     res.status(500).json({ error });
