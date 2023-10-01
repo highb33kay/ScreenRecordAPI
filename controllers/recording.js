@@ -9,6 +9,7 @@ const startRecording = async (req, res) => {
   try {
     const sessionID = generateUniqueSessionID();
     const createdAt = new Date();
+    console.log("New recording started: ", "Session ID:", sessionID, createdAt);
     await RecordingSession.create({ sessionID, createdAt });
     recordingData[sessionID] = { data: [], timeout: null }; // Add a timeout property
 
