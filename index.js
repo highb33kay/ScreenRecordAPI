@@ -5,6 +5,11 @@ require("dotenv").config();
 const { readdirSync } = require("fs");
 const cors = require("cors");
 require("./models/Upload");
+const bodyParser = require("body-parser");
+
+// Increase the request payload size limit to a larger value (e.g., 50MB)
+app.use(bodyParser.json({ limit: "50mb" }));
+app.use(bodyParser.urlencoded({ limit: "50mb", extended: true }));
 
 app.use(express.json());
 app.use(cors());
