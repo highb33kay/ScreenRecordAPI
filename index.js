@@ -24,7 +24,9 @@ readdirSync("./routes").map((path) => {
 });
 
 app.get("/", (req, res) => {
-  res.send("I am working but youve got to work too");
+  res.send(
+    "Welcome to the API of the Chrome Session Recorder!. Visit /api-docs for the documentation."
+  );
 });
 
 const PORT = process.env.PORT || 3000;

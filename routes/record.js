@@ -115,7 +115,7 @@ router.get("/start-recording", startRecording);
  *                   type: string
  *                   description: Error message.
  */
-router.post("/stream-recording/{sessionID}", streamRecordingData);
+router.post("/stream-recording/:sessionID", streamRecordingData);
 
 /**
  * @swagger

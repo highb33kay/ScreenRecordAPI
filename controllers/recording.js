@@ -1,5 +1,10 @@
 const fs = require("fs");
 const path = require("path");
+const { execSync: exec } = require("child_process");
+const { Deepgram } = require("@deepgram/sdk");
+const ffmpegStatic = require("ffmpeg-static");
+
+const deepgram = new Deepgram(process.env.DEEPGRAM_API_KEY);
 
 const recordingData = {};
 
@@ -21,6 +26,7 @@ const startRecording = async (req, res) => {
 
 const streamRecordingData = async (req, res) => {
   try {
+    console.log("RecordingData");
     const { sessionID } = req.params;
     const sessionExists = await RecordingSession.exists({ sessionID });
 
@@ -98,9 +104,15 @@ const stopRecordingAndSaveFile = async (req, res) => {
       deleteFile(videoURL);
     }, 5 * 60 * 1000);
 
-    res
-      .status(200)
-      .json({ streamURL, message: "Video saved successfully", videoURL });
+    // Transcribe the video
+    const transcription = await transcribeVideo(videoURL);
+
+    res.status(200).json({
+      streamURL,
+      message: "Video saved successfully",
+      videoURL,
+      transcription,
+    });
   } catch (error) {
     console.error(error);
     res.status(500).json({ error: "Failed to stop recording and save file." });
@@ -163,6 +175,40 @@ const streamVideo = (req, res) => {
   } catch (error) {
     console.error(error);
     res.status(500).json({ error: "Failed to stream video." });
+  }
+};
+
+// transcribe video
+const transcribeVideo = async (filePath) => {
+  try {
+    // Convert the video to WAV format using ffmpeg
+    exec(
+      `${ffmpegStatic} -i ${filePath} -vn -ar 44100 -ac 2 -ab 192k -f wav ${filePath}.wav`
+    );
+
+    // Read the audio file in WAV format
+    const audioBuffer = fs.readFileSync(`${filePath}.wav`);
+
+    // Transcribe the audio using Deepgram
+    const transcription = await deepgram.transcription.preRecorded(
+      {
+        buffer: audioBuffer,
+        mimetype: "audio/wav",
+      },
+      {
+        punctuation: true, // Enable punctuation in the transcription
+      }
+    );
+
+    // Delete the temporary audio file as it's no longer needed
+    fs.unlinkSync(`${filePath}.wav`);
+
+    return transcription.results;
+  } catch (error) {
+    console.error(error);
+
+    // Return a meaningful error message
+    throw new Error("Failed to transcribe video. Please try again later.");
   }
 };
 
