@@ -6,6 +6,10 @@ const { readdirSync } = require("fs");
 const cors = require("cors");
 require("./models/Upload");
 const bodyParser = require("body-parser");
+const swaggerUi = require("swagger-ui-express");
+const swaggerOptions = require("./swaggeroptions.js");
+
+app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerOptions));
 
 // Increase the request payload size limit to a larger value (e.g., 50MB)
 app.use(bodyParser.json({ limit: "50mb" }));
