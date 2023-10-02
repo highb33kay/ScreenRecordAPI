@@ -149,6 +149,9 @@ router.post("/stream-recording/:sessionID", streamRecordingData);
  *                 videoURL:
  *                   type: string
  *                   description: The URL to access the saved video file.
+ *                 transcription:
+ *                   type: string
+ *                   description: The transcription of the video.
  *       404:
  *         description: Session not found in the database.
  *         content:
