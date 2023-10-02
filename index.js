@@ -9,6 +9,9 @@ const bodyParser = require("body-parser");
 const swaggerUi = require("swagger-ui-express");
 const swaggerOptions = require("./swaggeroptions.js");
 
+const cron = require("node-cron");
+const emptyUploadsFolder = require("./controllers/emptydir");
+
 app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerOptions));
 
 // Increase the request payload size limit to a larger value (e.g., 50MB)
@@ -27,6 +30,10 @@ app.get("/", (req, res) => {
   res.send(
     "Welcome to the API of the Chrome Session Recorder!. Visit /api-docs for the documentation."
   );
+});
+
+cron.schedule("0 */2 * * *", () => {
+  emptyUploadsFolder();
 });
 
 const PORT = process.env.PORT || 3000;
